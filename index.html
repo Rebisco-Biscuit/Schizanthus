@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#111111">
+  <title>Photos</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #111;
+      color: #f5f5f7;
+      font-synthesis: none;
+    }
+
+    * { box-sizing: border-box; }
+
+    body { margin: 0; min-width: 280px; min-height: 100vh; }
+
+    .topbar {
+      position: sticky;
+      z-index: 1;
+      top: 0;
+      padding: 22px max(16px, calc((100vw - 1200px) / 2));
+      background: rgb(17 17 17 / 94%);
+      border-bottom: 1px solid #2b2b2d;
+      backdrop-filter: blur(18px);
+    }
+
+    .heading {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    h1 { margin: 0; font-size: clamp(22px, 5vw, 30px); letter-spacing: -.04em; }
+    #count { color: #a1a1a6; font-size: 14px; }
+
+    main { max-width: 1200px; margin: 0 auto; padding: 3px; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 3px;
+    }
+
+    .tile {
+      position: relative;
+      display: block;
+      overflow: hidden;
+      padding: 0;
+      aspect-ratio: 1;
+      border: 0;
+      background: #222;
+      cursor: pointer;
+    }
+
+    .tile img { display: block; width: 100%; height: 100%; object-fit: cover; }
+    .tile:focus-visible { z-index: 1; outline: 2px solid #fff; outline-offset: -3px; }
+    .message { padding: 64px 20px; color: #a1a1a6; text-align: center; }
+
+    .viewer[hidden] { display: none; }
+
+    .viewer {
+      position: fixed;
+      z-index: 2;
+      inset: 0;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 320px;
+      background: #080808;
+    }
+
+    .photo-stage {
+      position: relative;
+      display: grid;
+      min-width: 0;
+      min-height: 0;
+      place-items: center;
+      padding: 64px 20px 20px;
+    }
+
+    .photo-stage img { max-width: 100%; max-height: 100%; object-fit: contain; }
+
+    .close, .step {
+      position: absolute;
+      display: grid;
+      width: 42px;
+      height: 42px;
+      place-items: center;
+      border: 0;
+      border-radius: 50%;
+      background: #29292b;
+      color: white;
+      font-size: 24px;
+      cursor: pointer;
+    }
+
+    .close { top: 16px; left: 16px; }
+    .step { top: 50%; transform: translateY(-50%); }
+    .previous { left: 16px; }
+    .next { right: 16px; }
+
+    .info {
+      overflow: auto;
+      padding: 28px 22px;
+      border-left: 1px solid #2b2b2d;
+      background: #171719;
+    }
+
+    .info h2 { overflow-wrap: anywhere; margin: 0 0 6px; font-size: 16px; }
+    .info p { margin: 0 0 24px; color: #a1a1a6; font-size: 13px; }
+    .info dl { display: grid; grid-template-columns: 1fr auto; gap: 14px 12px; margin: 0; font-size: 13px; }
+    .info dt { color: #a1a1a6; }
+    .info dd { margin: 0; text-align: right; overflow-wrap: anywhere; }
+    .loading { color: #a1a1a6; }
+
+    @media (max-width: 760px) {
+      .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .viewer { display: flex; flex-direction: column; }
+      .photo-stage { flex: 1; min-height: 0; padding: 58px 12px 12px; }
+      .info { flex: none; max-height: 34vh; padding: 18px 20px max(20px, env(safe-area-inset-bottom)); border-top: 1px solid #2b2b2d; border-left: 0; }
+      .info p { margin-bottom: 16px; }
+      .close { top: 10px; left: 10px; }
+      .previous { left: 8px; }
+      .next { right: 8px; }
+    }
+
+    @media (max-width: 360px) {
+      .grid { gap: 2px; }
+      .info dl { gap: 12px 8px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="heading">
+      <h1>KK_SG</h1>
+      <span id="count" aria-live="polite">Loading photos…</span>
+    </div>
+  </header>
+  <main>
+    <div id="grid" class="grid" aria-label="Photos"></div>
+    <p id="message" class="message" role="status" hidden></p>
+  </main>
+  <section id="viewer" class="viewer" role="dialog" aria-modal="true" aria-label="Photo preview" hidden>
+    <div class="photo-stage">
+      <button id="close" class="close" type="button" aria-label="Close preview">×</button>
+      <button id="previous" class="step previous" type="button" aria-label="Previous photo">‹</button>
+      <img id="preview" alt="">
+      <button id="next" class="step next" type="button" aria-label="Next photo">›</button>
+    </div>
+    <aside class="info" aria-live="polite">
+      <h2 id="photo-name"></h2>
+      <p id="photo-date" class="loading">Loading details…</p>
+      <dl id="metadata"></dl>
+    </aside>
+  </section>
+  <script>
+    const grid = document.querySelector('#grid');
+    const count = document.querySelector('#count');
+    const message = document.querySelector('#message');
+    const viewer = document.querySelector('#viewer');
+    const preview = document.querySelector('#preview');
+    const photoName = document.querySelector('#photo-name');
+    const photoDate = document.querySelector('#photo-date');
+    const metadata = document.querySelector('#metadata');
+    let photos = [];
+    let selected = -1;
+
+    function formatDate(value) {
+      if (!value) return 'Date unavailable';
+      const match = value.match(/^(\d{4}):(\d{2}):(\d{2})\s*(.*)$/);
+      const date = match
+        ? new Date(`${match[1]}-${match[2]}-${match[3]}T${match[4] || '00:00:00'}`)
+        : new Date(value);
+      return Number.isNaN(date.getTime())
+        ? value
+        : new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(date);
+    }
+
+    function formatBytes(bytes) {
+      if (bytes < 1024) return `${bytes} B`;
+      const units = ['KB', 'MB', 'GB'];
+      let size = bytes / 1024;
+      let unit = 0;
+      while (size >= 1024 && unit < units.length - 1) {
+        size /= 1024;
+        unit += 1;
+      }
+      return `${size.toFixed(1)} ${units[unit]}`;
+    }
+
+    function formatRational(value) {
+      if (!value) return null;
+      const [numerator, denominator] = value.split('/').map(Number);
+      if (!denominator) return value;
+      if (numerator === 1) return `1/${denominator}`;
+      const result = numerator / denominator;
+      return Number.isInteger(result) ? `${result}` : `${Number(result.toFixed(2))}`;
+    }
+
+    function showMetadata(data, photo) {
+      const taken = data.dateTaken ? formatDate(data.dateTaken) : null;
+      const rows = [
+        ['Taken', taken === 'Date unavailable' ? null : taken],
+        ['Camera', data.model || data.camera],
+        ['Dimensions', data.width && data.height ? `${data.width} × ${data.height}` : null],
+        ['File size', formatBytes(photo.size)],
+        ['ISO', data.iso],
+        ['Aperture', data.aperture ? `f/${formatRational(data.aperture)}` : null],
+        ['Exposure', data.exposure ? `${formatRational(data.exposure)} sec` : null],
+        ['Focal length', data.focalLength ? `${formatRational(data.focalLength)} mm` : null],
+        ['35 mm equiv.', data.focalLength35mm ? `${data.focalLength35mm} mm` : null],
+        ['Modified', formatDate(photo.modified)]
+      ];
+      metadata.replaceChildren(...rows.filter(([, value]) => value).flatMap(([label, value]) => {
+        const term = document.createElement('dt');
+        const detail = document.createElement('dd');
+        term.textContent = label;
+        detail.textContent = value;
+        return [term, detail];
+      }));
+      photoDate.textContent = taken && taken !== 'Date unavailable' ? 'Photo details' : formatDate(photo.modified);
+      photoDate.classList.remove('loading');
+    }
+
+    async function openPhoto(index) {
+      selected = index;
+      const photo = photos[index];
+      viewer.hidden = false;
+      document.body.style.overflow = 'hidden';
+      preview.src = `/photo/${photo.id}`;
+      preview.alt = photo.name;
+      photoName.textContent = photo.name;
+      photoDate.textContent = 'Loading details…';
+      photoDate.classList.add('loading');
+      metadata.replaceChildren();
+
+      try {
+        const response = await fetch(`/api/photos/${photo.id}`);
+        if (!response.ok) throw new Error('Photo details could not be loaded.');
+        showMetadata(await response.json(), photo);
+      } catch {
+        photoDate.textContent = 'Photo details could not be loaded.';
+        photoDate.classList.remove('loading');
+      }
+      document.querySelector('#close').focus();
+    }
+
+    function closePhoto() {
+      viewer.hidden = true;
+      preview.removeAttribute('src');
+      document.body.style.overflow = '';
+      selected = -1;
+    }
+
+    document.querySelector('#close').addEventListener('click', closePhoto);
+    document.querySelector('#previous').addEventListener('click', () => {
+      if (selected > 0) openPhoto(selected - 1);
+    });
+    document.querySelector('#next').addEventListener('click', () => {
+      if (selected < photos.length - 1) openPhoto(selected + 1);
+    });
+    viewer.addEventListener('click', event => {
+      if (event.target === viewer) closePhoto();
+    });
+    document.addEventListener('keydown', event => {
+      if (viewer.hidden) return;
+      if (event.key === 'Escape') closePhoto();
+      if (event.key === 'ArrowLeft' && selected > 0) openPhoto(selected - 1);
+      if (event.key === 'ArrowRight' && selected < photos.length - 1) openPhoto(selected + 1);
+    });
+
+    async function loadPhotos() {
+      try {
+        const response = await fetch('/api/photos');
+        if (!response.ok) throw new Error('The photo folder could not be read.');
+        photos = await response.json();
+        count.textContent = `${photos.length} ${photos.length === 1 ? 'photo' : 'photos'}`;
+        if (!photos.length) {
+          message.textContent = 'No supported photos found in this folder.';
+          message.hidden = false;
+          return;
+        }
+        const tiles = photos.map((photo, index) => {
+          const button = document.createElement('button');
+          button.className = 'tile';
+          button.type = 'button';
+          button.setAttribute('aria-label', `${photo.name}, ${formatDate(photo.modified)}`);
+          const image = document.createElement('img');
+          image.src = `/thumb/${photo.id}`;
+          image.alt = '';
+          image.loading = 'lazy';
+          image.decoding = 'async';
+          image.addEventListener('error', () => {
+            image.removeAttribute('src');
+            image.style.background = 'linear-gradient(135deg, #29292b, #171719)';
+          }, { once: true });
+          button.append(image);
+          button.addEventListener('click', () => openPhoto(index));
+          return button;
+        });
+        grid.replaceChildren(...tiles);
+      } catch (error) {
+        count.textContent = 'Unable to load';
+        message.textContent = error.message;
+        message.hidden = false;
+      }
+    }
+
+    loadPhotos();
+  </script>
+</body>
+</html>
