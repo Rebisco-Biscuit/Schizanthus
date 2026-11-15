@@ -103,6 +103,8 @@
     .step { top: 50%; transform: translateY(-50%); }
     .previous { left: 16px; }
     .next { right: 16px; }
+    .step:disabled { opacity: .35; cursor: default; }
+    .close:focus-visible, .step:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
 
     .info {
       overflow: auto;
@@ -170,6 +172,7 @@
     const metadata = document.querySelector('#metadata');
     let photos = [];
     let selected = -1;
+    let returnFocus = null;
 
     function formatDate(value) {
       if (!value) return 'Date unavailable';
@@ -229,8 +232,11 @@
     }
 
     async function openPhoto(index) {
+      if (viewer.hidden) returnFocus = document.activeElement;
       selected = index;
       const photo = photos[index];
+      document.querySelector('#previous').disabled = index === 0;
+      document.querySelector('#next').disabled = index === photos.length - 1;
       viewer.hidden = false;
       document.body.style.overflow = 'hidden';
       preview.src = `/photo/${photo.id}`;
@@ -256,6 +262,8 @@
       preview.removeAttribute('src');
       document.body.style.overflow = '';
       selected = -1;
+      if (returnFocus instanceof HTMLElement) returnFocus.focus();
+      returnFocus = null;
     }
 
     document.querySelector('#close').addEventListener('click', closePhoto);
