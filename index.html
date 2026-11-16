@@ -84,6 +84,7 @@
     }
 
     .photo-stage img { max-width: 100%; max-height: 100%; object-fit: contain; }
+    .preview-error { position: absolute; color: #a1a1a6; text-align: center; }
 
     .close, .step {
       position: absolute;
@@ -153,6 +154,7 @@
       <button id="close" class="close" type="button" aria-label="Close preview">×</button>
       <button id="previous" class="step previous" type="button" aria-label="Previous photo">‹</button>
       <img id="preview" alt="">
+      <p id="preview-error" class="preview-error" role="status" hidden>Preview unavailable.</p>
       <button id="next" class="step next" type="button" aria-label="Next photo">›</button>
     </div>
     <aside class="info" aria-live="polite">
@@ -167,6 +169,7 @@
     const message = document.querySelector('#message');
     const viewer = document.querySelector('#viewer');
     const preview = document.querySelector('#preview');
+    const previewError = document.querySelector('#preview-error');
     const photoName = document.querySelector('#photo-name');
     const photoDate = document.querySelector('#photo-date');
     const metadata = document.querySelector('#metadata');
@@ -239,6 +242,8 @@
       document.querySelector('#next').disabled = index === photos.length - 1;
       viewer.hidden = false;
       document.body.style.overflow = 'hidden';
+      preview.hidden = false;
+      previewError.hidden = true;
       preview.src = `/photo/${photo.id}`;
       preview.alt = photo.name;
       photoName.textContent = photo.name;
@@ -267,6 +272,10 @@
     }
 
     document.querySelector('#close').addEventListener('click', closePhoto);
+    preview.addEventListener('error', () => {
+      preview.hidden = true;
+      previewError.hidden = false;
+    });
     document.querySelector('#previous').addEventListener('click', () => {
       if (selected > 0) openPhoto(selected - 1);
     });
