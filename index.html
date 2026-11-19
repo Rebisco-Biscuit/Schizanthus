@@ -13,128 +13,83 @@
       color: #f5f5f7;
       font-synthesis: none;
     }
-
     * { box-sizing: border-box; }
-
     body { margin: 0; min-width: 280px; min-height: 100vh; }
-
     .topbar {
-      position: sticky;
-      z-index: 1;
-      top: 0;
-      padding: 22px max(16px, calc((100vw - 1200px) / 2));
+      position: sticky; z-index: 1; top: 0;
+      padding: 18px max(16px, calc((100vw - 1200px) / 2));
       background: rgb(17 17 17 / 94%);
       border-bottom: 1px solid #2b2b2d;
       backdrop-filter: blur(18px);
     }
-
     .heading {
-      display: flex;
-      align-items: baseline;
-      justify-content: space-between;
-      gap: 12px;
-      max-width: 1200px;
-      margin: 0 auto;
+      display: flex; align-items: baseline; justify-content: space-between;
+      gap: 12px; max-width: 1200px; margin: 0 auto;
     }
-
     h1 { margin: 0; font-size: clamp(22px, 5vw, 30px); letter-spacing: -.04em; }
     #count { color: #a1a1a6; font-size: 14px; }
-
     main { max-width: 1200px; margin: 0 auto; padding: 3px; }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(5, minmax(0, 1fr));
-      gap: 3px;
-    }
-
+    .grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 3px; }
     .tile {
-      position: relative;
-      display: block;
-      overflow: hidden;
-      padding: 0;
-      aspect-ratio: 1;
-      border: 0;
-      background: #222;
-      cursor: pointer;
+      position: relative; display: block; overflow: hidden; padding: 0;
+      aspect-ratio: 1; border: 0; background: #222; cursor: pointer;
     }
-
     .tile img { display: block; width: 100%; height: 100%; object-fit: cover; }
     .tile:focus-visible { z-index: 1; outline: 2px solid #fff; outline-offset: -3px; }
     .message { padding: 64px 20px; color: #a1a1a6; text-align: center; }
-
     .viewer[hidden] { display: none; }
-
     .viewer {
-      position: fixed;
-      z-index: 2;
-      inset: 0;
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) 320px;
+      position: fixed; z-index: 2; inset: 0;
+      display: grid; grid-template-columns: minmax(0, 1fr) 340px;
       background: #080808;
     }
-
     .photo-stage {
-      position: relative;
-      display: grid;
-      min-width: 0;
-      min-height: 0;
-      place-items: center;
-      padding: 64px 20px 20px;
+      position: relative; display: grid; min-width: 0; min-height: 0;
+      place-items: center; padding: 64px 20px 20px;
     }
-
     .photo-stage img { max-width: 100%; max-height: 100%; object-fit: contain; }
     .preview-error { position: absolute; color: #a1a1a6; text-align: center; }
-
     .close, .step {
-      position: absolute;
-      display: grid;
-      width: 42px;
-      height: 42px;
-      place-items: center;
-      border: 0;
-      border-radius: 50%;
-      background: #29292b;
-      color: white;
-      font-size: 24px;
-      cursor: pointer;
+      position: absolute; display: grid; width: 42px; height: 42px;
+      place-items: center; border: 0; border-radius: 50%;
+      background: #29292b; color: white; font-size: 24px; cursor: pointer;
     }
-
     .close { top: 16px; left: 16px; }
     .step { top: 50%; transform: translateY(-50%); }
-    .previous { left: 16px; }
-    .next { right: 16px; }
+    .previous { left: 16px; } .next { right: 16px; }
     .step:disabled { opacity: .35; cursor: default; }
     .close:focus-visible, .step:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
-
     .info {
-      overflow: auto;
-      padding: 28px 22px;
-      border-left: 1px solid #2b2b2d;
-      background: #171719;
+      overflow: auto; padding: 26px 22px;
+      border-left: 1px solid #2b2b2d; background: #171719;
     }
-
     .info h2 { overflow-wrap: anywhere; margin: 0 0 6px; font-size: 16px; }
-    .info p { margin: 0 0 24px; color: #a1a1a6; font-size: 13px; }
-    .info dl { display: grid; grid-template-columns: 1fr auto; gap: 14px 12px; margin: 0; font-size: 13px; }
+    .info p { margin: 0 0 22px; color: #a1a1a6; font-size: 13px; }
+    .info h3 { margin: 24px 0 12px; font-size: 13px; color: #f5f5f7; }
+    .info dl { display: grid; grid-template-columns: 1fr auto; gap: 13px 12px; margin: 0; font-size: 13px; }
     .info dt { color: #a1a1a6; }
     .info dd { margin: 0; text-align: right; overflow-wrap: anywhere; }
     .loading { color: #a1a1a6; }
-
+    .map-link {
+      display: inline-flex; align-items: center; gap: 7px; margin-top: 13px;
+      color: #9fc5ff; font-size: 13px; text-decoration: none;
+    }
+    .map-link:hover { text-decoration: underline; }
+    .location-note { color: #a1a1a6; font-size: 12px; line-height: 1.5; }
     @media (max-width: 760px) {
       .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
       .viewer { display: flex; flex-direction: column; }
       .photo-stage { flex: 1; min-height: 0; padding: 58px 12px 12px; }
-      .info { flex: none; max-height: 34vh; padding: 18px 20px max(20px, env(safe-area-inset-bottom)); border-top: 1px solid #2b2b2d; border-left: 0; }
-      .info p { margin-bottom: 16px; }
+      .info {
+        flex: none; max-height: 42vh; padding: 18px 20px max(20px, env(safe-area-inset-bottom));
+        border-top: 1px solid #2b2b2d; border-left: 0;
+      }
+      .info p { margin-bottom: 14px; }
       .close { top: 10px; left: 10px; }
-      .previous { left: 8px; }
-      .next { right: 8px; }
+      .previous { left: 8px; } .next { right: 8px; }
     }
-
     @media (max-width: 360px) {
-      .grid { gap: 2px; }
-      .info dl { gap: 12px 8px; }
+      .grid { gap: 2px; } .info dl { gap: 11px 8px; }
     }
   </style>
 </head>
@@ -149,6 +104,7 @@
     <div id="grid" class="grid" aria-label="Photos"></div>
     <p id="message" class="message" role="status" hidden></p>
   </main>
+
   <section id="viewer" class="viewer" role="dialog" aria-modal="true" aria-label="Photo preview" hidden>
     <div class="photo-stage">
       <button id="close" class="close" type="button" aria-label="Close preview">×</button>
@@ -160,9 +116,10 @@
     <aside class="info" aria-live="polite">
       <h2 id="photo-name"></h2>
       <p id="photo-date" class="loading">Loading details…</p>
-      <dl id="metadata"></dl>
+      <div id="metadata"></div>
     </aside>
   </section>
+
   <script>
     const grid = document.querySelector('#grid');
     const count = document.querySelector('#count');
@@ -173,9 +130,12 @@
     const photoName = document.querySelector('#photo-name');
     const photoDate = document.querySelector('#photo-date');
     const metadata = document.querySelector('#metadata');
+
     let photos = [];
     let selected = -1;
     let returnFocus = null;
+    let detailsController = null;
+    const detailsCache = new Map();
 
     function formatDate(value) {
       if (!value) return 'Date unavailable';
@@ -193,49 +153,98 @@
       const units = ['KB', 'MB', 'GB'];
       let size = bytes / 1024;
       let unit = 0;
-      while (size >= 1024 && unit < units.length - 1) {
-        size /= 1024;
-        unit += 1;
-      }
+      while (size >= 1024 && unit < units.length - 1) { size /= 1024; unit++; }
       return `${size.toFixed(1)} ${units[unit]}`;
     }
 
     function formatRational(value) {
       if (!value) return null;
-      const [numerator, denominator] = value.split('/').map(Number);
+      const match = String(value).match(/^\s*(-?\d+)\s*\/\s*(\d+)\s*$/);
+      if (!match) return value;
+      const numerator = Number(match[1]);
+      const denominator = Number(match[2]);
       if (!denominator) return value;
       if (numerator === 1) return `1/${denominator}`;
       const result = numerator / denominator;
       return Number.isInteger(result) ? `${result}` : `${Number(result.toFixed(2))}`;
     }
 
+    function appendRow(dl, label, value) {
+      if (value === null || value === undefined || value === '') return;
+      const term = document.createElement('dt');
+      const detail = document.createElement('dd');
+      term.textContent = label;
+      detail.textContent = value;
+      dl.append(term, detail);
+    }
+
     function showMetadata(data, photo) {
       const taken = data.dateTaken ? formatDate(data.dateTaken) : null;
-      const rows = [
-        ['Taken', taken === 'Date unavailable' ? null : taken],
-        ['Camera', data.model || data.camera],
-        ['Dimensions', data.width && data.height ? `${data.width} × ${data.height}` : null],
-        ['File size', formatBytes(photo.size)],
-        ['ISO', data.iso],
-        ['Aperture', data.aperture ? `f/${formatRational(data.aperture)}` : null],
-        ['Exposure', data.exposure ? `${formatRational(data.exposure)} sec` : null],
-        ['Focal length', data.focalLength ? `${formatRational(data.focalLength)} mm` : null],
-        ['35 mm equiv.', data.focalLength35mm ? `${data.focalLength35mm} mm` : null],
-        ['Modified', formatDate(photo.modified)]
-      ];
-      metadata.replaceChildren(...rows.filter(([, value]) => value).flatMap(([label, value]) => {
-        const term = document.createElement('dt');
-        const detail = document.createElement('dd');
-        term.textContent = label;
-        detail.textContent = value;
-        return [term, detail];
-      }));
+      const details = document.createElement('dl');
+      appendRow(details, 'Taken', taken === 'Date unavailable' ? null : taken);
+      appendRow(details, 'Camera', data.model || data.camera);
+      appendRow(details, 'Dimensions', data.width && data.height ? `${data.width} × ${data.height}` : null);
+      appendRow(details, 'File size', formatBytes(photo.size));
+      appendRow(details, 'ISO', data.iso);
+      appendRow(details, 'Aperture', data.aperture ? `f/${formatRational(data.aperture)}` : null);
+      appendRow(details, 'Exposure', data.exposure ? `${formatRational(data.exposure)} sec` : null);
+      appendRow(details, 'Focal length', data.focalLength ? `${formatRational(data.focalLength)} mm` : null);
+      appendRow(details, '35 mm equiv.', data.focalLength35mm ? `${data.focalLength35mm} mm` : null);
+      appendRow(details, 'Modified', formatDate(photo.modified));
+
+      metadata.replaceChildren();
+      const cameraHeading = document.createElement('h3');
+      cameraHeading.textContent = 'Photo information';
+      metadata.append(cameraHeading, details);
+
+      if (Number.isFinite(Number(data.latitude)) && Number.isFinite(Number(data.longitude))) {
+        const latitude = Number(data.latitude);
+        const longitude = Number(data.longitude);
+        const locationHeading = document.createElement('h3');
+        locationHeading.textContent = 'Location';
+        const location = document.createElement('dl');
+        appendRow(location, 'Latitude', `${Math.abs(latitude).toFixed(6)}° ${latitude < 0 ? 'S' : 'N'}`);
+        appendRow(location, 'Longitude', `${Math.abs(longitude).toFixed(6)}° ${longitude < 0 ? 'W' : 'E'}`);
+
+        const mapLink = document.createElement('a');
+        mapLink.className = 'map-link';
+        mapLink.href = `https://www.google.com/maps?q=${encodeURIComponent(`${latitude},${longitude}`)}`;
+        mapLink.target = '_blank';
+        mapLink.rel = 'noopener noreferrer';
+        mapLink.textContent = 'Open location in Google Maps ↗';
+        metadata.append(locationHeading, location, mapLink);
+      } else {
+        const locationHeading = document.createElement('h3');
+        locationHeading.textContent = 'Location';
+        const note = document.createElement('p');
+        note.className = 'location-note';
+        note.textContent = 'No GPS coordinates found in this photo.';
+        metadata.append(locationHeading, note);
+      }
+
       photoDate.textContent = taken && taken !== 'Date unavailable' ? 'Photo details' : formatDate(photo.modified);
       photoDate.classList.remove('loading');
     }
 
+    function preloadPhoto(index) {
+      if (index < 0 || index >= photos.length) return;
+      const image = new Image();
+      image.src = `/photo/${photos[index].id}?v=${encodeURIComponent(photos[index].version)}`;
+    }
+
+    async function getDetails(photo) {
+      if (detailsCache.has(photo.id)) return detailsCache.get(photo.id);
+      const response = await fetch(`/api/photos/${photo.id}`);
+      if (!response.ok) throw new Error('Photo details could not be loaded.');
+      const data = await response.json();
+      detailsCache.set(photo.id, data);
+      return data;
+    }
+
     async function openPhoto(index) {
+      if (index < 0 || index >= photos.length) return;
       if (viewer.hidden) returnFocus = document.activeElement;
+
       selected = index;
       const photo = photos[index];
       document.querySelector('#previous').disabled = index === 0;
@@ -244,25 +253,42 @@
       document.body.style.overflow = 'hidden';
       preview.hidden = false;
       previewError.hidden = true;
-      preview.src = `/photo/${photo.id}`;
+      preview.src = `/photo/${photo.id}?v=${encodeURIComponent(photo.version)}`;
       preview.alt = photo.name;
       photoName.textContent = photo.name;
       photoDate.textContent = 'Loading details…';
       photoDate.classList.add('loading');
       metadata.replaceChildren();
 
+      if (detailsController) detailsController.abort();
+      detailsController = new AbortController();
+      const controller = detailsController;
+      const requestedId = photo.id;
+
       try {
-        const response = await fetch(`/api/photos/${photo.id}`);
-        if (!response.ok) throw new Error('Photo details could not be loaded.');
-        showMetadata(await response.json(), photo);
-      } catch {
-        photoDate.textContent = 'Photo details could not be loaded.';
-        photoDate.classList.remove('loading');
+        const cached = detailsCache.get(photo.id);
+        let data = cached;
+        if (!data) {
+          const response = await fetch(`/api/photos/${photo.id}`, { signal: controller.signal });
+          if (!response.ok) throw new Error('Photo details could not be loaded.');
+          data = await response.json();
+          detailsCache.set(photo.id, data);
+        }
+        if (selected === index && photos[selected]?.id === requestedId) showMetadata(data, photo);
+      } catch (error) {
+        if (error.name !== 'AbortError' && selected === index) {
+          photoDate.textContent = 'Photo details could not be loaded.';
+          photoDate.classList.remove('loading');
+        }
       }
+
+      preloadPhoto(index - 1);
+      preloadPhoto(index + 1);
       document.querySelector('#close').focus();
     }
 
     function closePhoto() {
+      if (detailsController) detailsController.abort();
       viewer.hidden = true;
       preview.removeAttribute('src');
       document.body.style.overflow = '';
@@ -276,15 +302,9 @@
       preview.hidden = true;
       previewError.hidden = false;
     });
-    document.querySelector('#previous').addEventListener('click', () => {
-      if (selected > 0) openPhoto(selected - 1);
-    });
-    document.querySelector('#next').addEventListener('click', () => {
-      if (selected < photos.length - 1) openPhoto(selected + 1);
-    });
-    viewer.addEventListener('click', event => {
-      if (event.target === viewer) closePhoto();
-    });
+    document.querySelector('#previous').addEventListener('click', () => openPhoto(selected - 1));
+    document.querySelector('#next').addEventListener('click', () => openPhoto(selected + 1));
+    viewer.addEventListener('click', event => { if (event.target === viewer) closePhoto(); });
     document.addEventListener('keydown', event => {
       if (viewer.hidden) return;
       if (event.key === 'Escape') closePhoto();
@@ -303,13 +323,17 @@
           message.hidden = false;
           return;
         }
-        const tiles = photos.map((photo, index) => {
+
+        // Build the grid once, but let the browser defer image decoding/loading.
+        const fragment = document.createDocumentFragment();
+        photos.forEach((photo, index) => {
           const button = document.createElement('button');
           button.className = 'tile';
           button.type = 'button';
           button.setAttribute('aria-label', `${photo.name}, ${formatDate(photo.modified)}`);
+
           const image = document.createElement('img');
-          image.src = `/thumb/${photo.id}`;
+          image.src = `/thumb/${photo.id}?v=${encodeURIComponent(photo.version)}`;
           image.alt = '';
           image.loading = 'lazy';
           image.decoding = 'async';
@@ -317,11 +341,12 @@
             image.removeAttribute('src');
             image.style.background = 'linear-gradient(135deg, #29292b, #171719)';
           }, { once: true });
+
           button.append(image);
           button.addEventListener('click', () => openPhoto(index));
-          return button;
+          fragment.append(button);
         });
-        grid.replaceChildren(...tiles);
+        grid.replaceChildren(fragment);
       } catch (error) {
         count.textContent = 'Unable to load';
         message.textContent = error.message;

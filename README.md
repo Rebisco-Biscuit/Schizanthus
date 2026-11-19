@@ -1,15 +1,57 @@
-# <img width="26" height="26" alt="image" src="https://github.com/user-attachments/assets/5b94503c-0ade-4b0b-83e4-ddb7db673f39" /> Schizanthus
+# Local Photo Viewer
 
-A small, local photo viewer for `D:\Album\KK_SG`.
+A local photo viewer for `D:\Album\KK_SG\`.
+
+## Requirements
+
+- Windows PowerShell 5.1 or PowerShell 7
+- Windows Imaging Component (WIC) codecs for the formats you want to decode
+- An HEIC/HEIF codec installed on Windows if you want HEIC/HEIF thumbnails and previews
 
 ## Run
 
-On Windows, start PowerShell in this folder and run:
+Open PowerShell in this folder and run:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\server.ps1
 ```
 
-Then open [http://127.0.0.1:8765](http://127.0.0.1:8765). To use another folder or port, pass `-PhotoDirectory` or `-Port` to the script. Stop the server with Ctrl+C.
+Then open <http://127.0.0.1:8765/>.
 
-The viewer runs on loopback only, reads photos without modifying them, and keeps photo data on this computer. It shows HEIC, HEIF, JPEG, PNG, WebP, and TIFF images, with available camera metadata, dimensions, file size, and dates.
+To use another folder or port:
+
+```powershell
+.\server.ps1 -PhotoDirectory 'D:\Photos' -Port 8765
+```
+
+Stop the server with Ctrl+C.
+
+## Performance changes
+
+- Thumbnails are generated once and stored in `.photo-cache\thumbs`.
+- HEIC, HEIF and TIFF previews are converted once and stored in `.photo-cache\previews`.
+- Extracted EXIF metadata is cached in `.photo-cache\metadata`.
+- Cache names include file size and last-write timestamp, so changed source files get new cache entries.
+- The browser caches photo details during the current session, aborts stale detail requests, and preloads adjacent previews.
+
+The first visit to a photo may still take time because its thumbnail or metadata has to be generated. Later visits reuse the cache.
+
+## GPS and maps
+
+When a photo contains readable EXIF GPS latitude and longitude, the information panel displays the coordinates and a Google Maps link. Photos without embedded GPS data show a short notice instead.
+
+The map link opens Google Maps in a new tab. No reverse-geocoding service is used, so the viewer does not attempt to guess a street address or place name.
+
+## Privacy and file handling
+
+- The server binds to `127.0.0.1` only.
+- Original photos are read but never modified.
+- Generated cache files are stored beside the script in `.photo-cache`.
+- Opening a Google Maps link sends the coordinates to Google Maps. The photo itself is not uploaded by this viewer.
+
+## Notes
+
+- HEIC/HEIF support depends on the codecs installed on Windows.
+- WIC metadata support varies by image format and codec. Some formats may not expose all EXIF fields.
+- The server handles requests sequentially. Disk caching removes the repeated conversion cost, but this version does not yet use a multi-threaded request worker pool.
+- If you replace or rename photos, restart the server so the in-memory photo index is refreshed.
