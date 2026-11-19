@@ -38,20 +38,21 @@ The first visit to a photo may still take time because its thumbnail or metadata
 
 ## GPS and maps
 
-When a photo contains readable EXIF GPS latitude and longitude, the information panel displays the coordinates and a Google Maps link. Photos without embedded GPS data show a short notice instead.
+When a photo contains readable EXIF GPS latitude and longitude, the information panel displays the coordinates and an interactive map directly inside the viewer. Photos without embedded GPS data show a short notice instead.
 
-The map link opens Google Maps in a new tab. No reverse-geocoding service is used, so the viewer does not attempt to guess a street address or place name.
+The map uses Leaflet with OpenStreetMap map tiles. It does not require an API key or paid account. OpenStreetMap attribution is displayed below the map. The public OpenStreetMap tile service has a usage policy and is intended for reasonable interactive use, not bulk tile downloading or high-volume production traffic. No reverse-geocoding service is used, so the viewer does not guess a street address or place name.
 
 ## Privacy and file handling
 
 - The server binds to `127.0.0.1` only.
 - Original photos are read but never modified.
 - Generated cache files are stored beside the script in `.photo-cache`.
-- Opening a Google Maps link sends the coordinates to Google Maps. The photo itself is not uploaded by this viewer.
+- When a GPS map is displayed, the browser requests map tiles from the OpenStreetMap tile service. The photo itself is not uploaded by this viewer.
 
 ## Notes
 
 - HEIC/HEIF support depends on the codecs installed on Windows.
 - WIC metadata support varies by image format and codec. Some formats may not expose all EXIF fields.
 - The server handles requests sequentially. Disk caching removes the repeated conversion cost, but this version does not yet use a multi-threaded request worker pool.
+- The in-page map requires an internet connection to load Leaflet and OpenStreetMap tiles.
 - If you replace or rename photos, restart the server so the in-memory photo index is refreshed.

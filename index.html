@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#111111">
   <title>Photos</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
   <style>
     :root {
       color-scheme: dark;
@@ -44,10 +45,16 @@
       background: #080808;
     }
     .photo-stage {
-      position: relative; display: grid; min-width: 0; min-height: 0;
+      position: relative; display: grid; grid-template-rows: minmax(0, 1fr);
+      min-width: 0; min-height: 0; overflow: hidden;
       place-items: center; padding: 64px 20px 20px;
     }
-    .photo-stage img { max-width: 100%; max-height: 100%; object-fit: contain; }
+    /* Keep the image inside the available stage without cropping either axis. */
+    .photo-stage img {
+      display: block; width: auto; height: auto;
+      min-width: 0; min-height: 0; max-width: 100%; max-height: 100%;
+      object-fit: contain; object-position: center;
+    }
     .preview-error { position: absolute; color: #a1a1a6; text-align: center; }
     .close, .step {
       position: absolute; display: grid; width: 42px; height: 42px;
@@ -76,6 +83,12 @@
     }
     .map-link:hover { text-decoration: underline; }
     .location-note { color: #a1a1a6; font-size: 12px; line-height: 1.5; }
+    #photo-map {
+      width: 100%; height: 220px; margin-top: 12px;
+      overflow: hidden; border: 1px solid #38383b; border-radius: 10px;
+      background: #242426;
+    }
+    .map-attribution { margin-top: 7px !important; font-size: 10px !important; }
     @media (max-width: 760px) {
       .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
       .viewer { display: flex; flex-direction: column; }
@@ -120,6 +133,7 @@
     </aside>
   </section>
 
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script>
     const grid = document.querySelector('#grid');
     const count = document.querySelector('#count');
@@ -178,48 +192,89 @@
       dl.append(term, detail);
     }
 
+    let photoMap = null;
+    let photoMarker = null;
+
     function showMetadata(data, photo) {
       const taken = data.dateTaken ? formatDate(data.dateTaken) : null;
+      const rows = [
+        ['Taken', taken === 'Date unavailable' ? null : taken],
+        ['Camera', data.model || data.camera],
+        ['Dimensions', data.width && data.height ? `${data.width} × ${data.height}` : null],
+        ['File size', formatBytes(photo.size)],
+        ['ISO', data.iso],
+        ['Aperture', data.aperture ? `f/${formatRational(data.aperture)}` : null],
+        ['Exposure', data.exposure ? `${formatRational(data.exposure)} sec` : null],
+        ['Focal length', data.focalLength ? `${formatRational(data.focalLength)} mm` : null],
+        ['35 mm equiv.', data.focalLength35mm ? `${data.focalLength35mm} mm` : null],
+        ['Modified', formatDate(photo.modified)]
+      ];
+
       const details = document.createElement('dl');
-      appendRow(details, 'Taken', taken === 'Date unavailable' ? null : taken);
-      appendRow(details, 'Camera', data.model || data.camera);
-      appendRow(details, 'Dimensions', data.width && data.height ? `${data.width} × ${data.height}` : null);
-      appendRow(details, 'File size', formatBytes(photo.size));
-      appendRow(details, 'ISO', data.iso);
-      appendRow(details, 'Aperture', data.aperture ? `f/${formatRational(data.aperture)}` : null);
-      appendRow(details, 'Exposure', data.exposure ? `${formatRational(data.exposure)} sec` : null);
-      appendRow(details, 'Focal length', data.focalLength ? `${formatRational(data.focalLength)} mm` : null);
-      appendRow(details, '35 mm equiv.', data.focalLength35mm ? `${data.focalLength35mm} mm` : null);
-      appendRow(details, 'Modified', formatDate(photo.modified));
+      rows.filter(([, value]) => value !== null && value !== undefined && value !== '')
+        .forEach(([label, value]) => appendRow(details, label, value));
 
       metadata.replaceChildren();
-      const cameraHeading = document.createElement('h3');
-      cameraHeading.textContent = 'Photo information';
-      metadata.append(cameraHeading, details);
+      const detailsHeading = document.createElement('h3');
+      detailsHeading.textContent = 'Photo information';
+      metadata.append(detailsHeading, details);
 
-      if (Number.isFinite(Number(data.latitude)) && Number.isFinite(Number(data.longitude))) {
-        const latitude = Number(data.latitude);
-        const longitude = Number(data.longitude);
-        const locationHeading = document.createElement('h3');
-        locationHeading.textContent = 'Location';
-        const location = document.createElement('dl');
-        appendRow(location, 'Latitude', `${Math.abs(latitude).toFixed(6)}° ${latitude < 0 ? 'S' : 'N'}`);
-        appendRow(location, 'Longitude', `${Math.abs(longitude).toFixed(6)}° ${longitude < 0 ? 'W' : 'E'}`);
+      const locationHeading = document.createElement('h3');
+      locationHeading.textContent = 'Location';
+      metadata.append(locationHeading);
 
-        const mapLink = document.createElement('a');
-        mapLink.className = 'map-link';
-        mapLink.href = `https://www.google.com/maps?q=${encodeURIComponent(`${latitude},${longitude}`)}`;
-        mapLink.target = '_blank';
-        mapLink.rel = 'noopener noreferrer';
-        mapLink.textContent = 'Open location in Google Maps ↗';
-        metadata.append(locationHeading, location, mapLink);
+      const latitude = Number(data.latitude);
+      const longitude = Number(data.longitude);
+      const hasGps = data.latitude !== null && data.latitude !== undefined &&
+        data.longitude !== null && data.longitude !== undefined &&
+        Number.isFinite(latitude) && Number.isFinite(longitude) &&
+        Math.abs(latitude) <= 90 && Math.abs(longitude) <= 180;
+
+      if (hasGps) {
+        const coordinates = document.createElement('dl');
+        appendRow(coordinates, 'Latitude', `${Math.abs(latitude).toFixed(6)}° ${latitude < 0 ? 'S' : 'N'}`);
+        appendRow(coordinates, 'Longitude', `${Math.abs(longitude).toFixed(6)}° ${longitude < 0 ? 'W' : 'E'}`);
+        const map = document.createElement('div');
+        map.id = 'photo-map';
+        map.setAttribute('role', 'application');
+        map.setAttribute('aria-label', 'Map showing where this photo was taken');
+        const attribution = document.createElement('p');
+        attribution.className = 'location-note map-attribution';
+        attribution.textContent = 'Map data © OpenStreetMap contributors';
+        metadata.append(coordinates, map, attribution);
+
+        if (window.L) {
+          if (photoMap) {
+            photoMap.remove();
+            photoMap = null;
+            photoMarker = null;
+          }
+          photoMap = L.map(map, { scrollWheelZoom: false, zoomControl: true }).setView([latitude, longitude], 15);
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors'
+          }).addTo(photoMap);
+          photoMarker = L.marker([latitude, longitude]).addTo(photoMap)
+            .bindPopup(`${latitude.toFixed(6)}, ${longitude.toFixed(6)}`);
+          requestAnimationFrame(() => photoMap && photoMap.invalidateSize());
+        } else {
+          map.textContent = 'Map library could not be loaded. Coordinates are shown above.';
+          map.style.display = 'grid';
+          map.style.placeItems = 'center';
+          map.style.padding = '12px';
+          map.style.color = '#a1a1a6';
+          map.style.fontSize = '12px';
+        }
       } else {
-        const locationHeading = document.createElement('h3');
-        locationHeading.textContent = 'Location';
         const note = document.createElement('p');
         note.className = 'location-note';
         note.textContent = 'No GPS coordinates found in this photo.';
-        metadata.append(locationHeading, note);
+        metadata.append(note);
+        if (photoMap) {
+          photoMap.remove();
+          photoMap = null;
+          photoMarker = null;
+        }
       }
 
       photoDate.textContent = taken && taken !== 'Date unavailable' ? 'Photo details' : formatDate(photo.modified);
@@ -230,15 +285,6 @@
       if (index < 0 || index >= photos.length) return;
       const image = new Image();
       image.src = `/photo/${photos[index].id}?v=${encodeURIComponent(photos[index].version)}`;
-    }
-
-    async function getDetails(photo) {
-      if (detailsCache.has(photo.id)) return detailsCache.get(photo.id);
-      const response = await fetch(`/api/photos/${photo.id}`);
-      if (!response.ok) throw new Error('Photo details could not be loaded.');
-      const data = await response.json();
-      detailsCache.set(photo.id, data);
-      return data;
     }
 
     async function openPhoto(index) {
