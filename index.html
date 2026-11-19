@@ -47,7 +47,7 @@
     .photo-stage {
       position: relative; display: grid; grid-template-rows: minmax(0, 1fr);
       min-width: 0; min-height: 0; overflow: hidden;
-      place-items: center; padding: 64px 20px 20px;
+      place-items: center; padding: 20px;
     }
     /* Keep the image inside the available stage without cropping either axis. */
     .photo-stage img {
@@ -61,7 +61,14 @@
       place-items: center; border: 0; border-radius: 50%;
       background: #29292b; color: white; font-size: 24px; cursor: pointer;
     }
-    .close { top: 16px; left: 16px; }
+    .close {
+      top: 16px; right: 16px; z-index: 1;
+      background: rgba(41, 41, 43, .72);
+      -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, .35);
+      transition: background .15s;
+    }
+    .close:hover { background: rgba(70, 70, 73, .9); }
     .step { top: 50%; transform: translateY(-50%); }
     .previous { left: 16px; } .next { right: 16px; }
     .step:disabled { opacity: .35; cursor: default; }
@@ -92,13 +99,13 @@
     @media (max-width: 760px) {
       .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
       .viewer { display: flex; flex-direction: column; }
-      .photo-stage { flex: 1; min-height: 0; padding: 58px 12px 12px; }
+      .photo-stage { flex: 1; min-height: 0; padding: 12px; }
       .info {
         flex: none; max-height: 42vh; padding: 18px 20px max(20px, env(safe-area-inset-bottom));
         border-top: 1px solid #2b2b2d; border-left: 0;
       }
       .info p { margin-bottom: 14px; }
-      .close { top: 10px; left: 10px; }
+      .close { top: 10px; right: 10px; }
       .previous { left: 8px; } .next { right: 8px; }
     }
     @media (max-width: 360px) {
